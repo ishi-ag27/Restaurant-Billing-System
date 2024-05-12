@@ -53,6 +53,8 @@ def costFieldListener(a, b, c):
 # ======== login variable ========
 usernameVar = StringVar()
 passwordVar = StringVar()
+userRole = StringVar()
+
 
 # ============ main window variable ========
 options = []
@@ -288,6 +290,7 @@ def readAllData():
 def adminLogin():
     global usernameVar
     global passwordVar
+    global userRole
 
     username = usernameVar.get()
     password = passwordVar.get()
@@ -302,8 +305,35 @@ def adminLogin():
     admin = False
     for row in data:
         admin = True
+        userRole.set(
+            row[2]
+        )  # Assuming the user role is in the third column of the users table
     conn.close()
     if admin:
+        readAllData()
+    else:
+        messagebox.showerror("Invalid user", "Credentials entered are invalid")
+
+
+def staffLogin():
+    global usernameVar
+    global passwordVar
+
+    username = usernameVar.get()
+    password = passwordVar.get()
+
+    conn = pymysql.connect(host="localhost", user="root", passwd="", db="billservice")
+    cursor = conn.cursor()
+    query = "select * from users where username='{}' and password='{}' and role='staff'".format(
+        username, password
+    )
+    cursor.execute(query)
+    data = cursor.fetchall()
+    staff = False
+    for row in data:
+        staff = True
+    conn.close()
+    if staff:
         readAllData()
     else:
         messagebox.showerror("Invalid user", "Credentials entered are invalid")
@@ -389,7 +419,9 @@ def loginWindow():
     loginFrame = Frame(window, bg="#f0f0f0")  # Set frame background color
     loginFrame.grid(row=2, column=0, columnspan=2, pady=10)
 
-    loginLabel = Label(loginFrame, text="Admin Login", font=("Arial", 20), bg="#f0f0f0")
+    loginLabel = Label(
+        loginFrame, text="Operator Login", font=("Arial", 20), bg="#f0f0f0"
+    )
     loginLabel.grid(row=0, column=0, columnspan=2, pady=10)
 
     usernameLabel = Label(loginFrame, text="Username", bg="#f0f0f0")
@@ -426,29 +458,50 @@ def mainwindow():
     )
     titleLabel.grid(row=0, column=0, columnspan=5, pady=(10, 20))
 
-    addNewItem = Button(
-        window,
-        text="Add Item",
-        width=15,
-        height=2,
-        command=lambda: addItemListener(),
-        bg="#007bff",
-        fg="white",
-        font=("Arial", 12, "bold"),
-    )
-    addNewItem.grid(row=1, column=0, padx=10, pady=10)
+    # Show or hide buttons based on user role
+    if userRole.get() == "admin":
+        addNewItem = Button(
+            window,
+            text="Add Item",
+            width=15,
+            height=2,
+            command=lambda: addItemListener(),
+            bg="#007bff",
+            fg="white",
+            font=("Arial", 12, "bold"),
+        )
+        addNewItem.grid(row=1, column=0, padx=10, pady=10)
 
-    updateItem = Button(
-        window,
-        text="Update Item",
-        width=15,
-        height=2,
-        bg="#ffc107",
-        fg="black",
-        font=("Arial", 12, "bold"),
-        command=lambda: moveToUpdate(),
-    )
-    updateItem.grid(row=1, column=1, padx=10, pady=10)
+        updateItem = Button(
+            window,
+            text="Update Item",
+            width=15,
+            height=2,
+            bg="#ffc107",
+            fg="black",
+            font=("Arial", 12, "bold"),
+            command=lambda: moveToUpdate(),
+        )
+        updateItem.grid(row=1, column=1, padx=10, pady=10)
+    else:
+        # Hide the buttons for staff users
+        """addNewItem = Label(
+            window,
+            text="Add Item",
+            width=15,
+            height=2,
+            bg="#f0f0f0",
+        )
+        addNewItem.grid(row=1, column=0, padx=10, pady=10)
+
+        updateItem = Label(
+            window,
+            text="Update Item",
+            width=15,
+            height=2,
+            bg="#f0f0f0",
+        )
+        updateItem.grid(row=1, column=1, padx=10, pady=10)"""
 
     showallEntry = Button(
         window,
